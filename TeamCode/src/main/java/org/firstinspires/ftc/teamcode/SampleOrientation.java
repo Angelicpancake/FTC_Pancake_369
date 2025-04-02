@@ -33,6 +33,17 @@ public class SampleOrientation extends OpenCvPipeline {
     private Mat maskCombined = new Mat();
 
 
+    //now we create a class for each individual block
+    //we can utilize this class to differentiate between the
+    //different blocks in the submersible or on field (alliance specific vs shared) etc.
+    public static class DetectedBlock{
+        public String color;
+        public double angle;
+        public double distance;
+        public SamplePosition position;
+
+    }
+
 
     //any image or Mat you return from processFrame() will be shown on the driver hub.
 
@@ -49,8 +60,17 @@ public class SampleOrientation extends OpenCvPipeline {
         LEFT,CENTER,RIGHT,NOT_FOUND
     }
 
-    //returns not found if sample isn't found
-    public volatile SamplePosition position = SamplePosition.NOT_FOUND;
+    //creating a public variable that stores objects of type DetectedBlock
+    //volatile marking ensures its shared between threads
+    /*volatile basically means that the variable
+    might be acessed by multiple threads, so the system
+    should always read the latest version of it from memory
+
+    We are sharing the detectedBlocks variable between program loops
+    (sharing pipeline between auto and teleop loops)
+    * */
+    //starts off empty
+    public volatile ArrayList<DetectedBlock> detectedBlocks = new ArrayList<>();
 
 
     //following method is called when pipeline is started
@@ -173,7 +193,7 @@ public class SampleOrientation extends OpenCvPipeline {
         * if we didn't release maskRed2 a new copy of the mask will be created for every frame
         * this will overload the memory
         *
-        * use .release() when creating a new matrix inside the processFrame() loop
+        * use .release() when creating a new matrix inside the processFrame() loop or any loop for that matter
         * */
 
 
@@ -192,6 +212,77 @@ public class SampleOrientation extends OpenCvPipeline {
         *
         * its used for depth perception
         * */
+
+
+        /*MatOfPoint is a subclass of superclass Mat which is
+        * made to hold a list of 2D points representing contours
+        *
+        * for the contours list we made, each MatOfPoint is
+        * one detected shape which contains a list of point objects
+        * that trade the shapes edge
+        * essentially contours list we made is a list of a list of points
+        *  */
+        ArrayList<MatOfPoint> contours = new ArrayList<>();
+
+        Mat hierarchy = new Mat();
+
+
+        /*
+        * Imgproc.findContours()
+        * is a function that finds the outlines of objects
+        *
+        * Imgproc.findContours(Mat image, ArrayList<MatOfPoint> contourList, Mat hierarchy, int mode, int method);
+        *
+        * Mat image = the image we create contours out of
+        * ArrayList<MatOfPoint> contourList = place we store contours
+        * Mat Hierarchy = a place to store nesting relationships between contours
+        * -> EX. if a shape has a hole in it, the outer shape is one contour and the hole is another
+        * -> the hiearchy tells OpenCV which contours are parents, children or siblings
+        * -> we are going to throw away the children contours by releasing the Hiearchy Mat
+        *
+        * int mode = determines which contours to return
+        * -> OpenCV has many ways to group contours
+        * -> common values are .RETR_EXTERNAL (outermost contours) -> no holes
+        * -> .RETR_TREE (all contours and hierarchy)
+        * -> .RETR_LIST (all contours but no hiearchy)
+        *
+        * In other games we would use RETR_TREE or RETR_LIST if we are detecting holes
+        * for Into the deep we don't have to worry about holes
+        *
+        * int method = How to simplify the contour
+        * -> .CHAIN_APPROX_SIMPLE tells OpenCV to approximate contours to reduce the number of points
+        * -> .CHAIN_APPROX_NONE stores all edge points
+        *
+        * */
+        Imgproc.findContours(maskCombined, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+
+
+        //now remember to release all mats created in the loop to save memory
+        hierarchy.release();
+
+
+        //Step 4 finding block information
+
+
+
+        //Explain??????
+        detectedBlocks.clear();
+
+        //Explain??????
+        //Getting the bound rectangle
+        //probably have to refer back to the githubs of other teams for this
+
+
+        //Explain??????
+        //Finding the Center
+
+
+        //Explain??????
+        //Calculating the Angle using the bound rectangle
+        //probably have to refer back to the githubs of other teams for this
+
+
+
 
 
 
